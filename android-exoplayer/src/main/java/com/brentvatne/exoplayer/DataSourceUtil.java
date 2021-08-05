@@ -8,6 +8,7 @@ import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 
@@ -61,7 +62,7 @@ public class DataSourceUtil {
 
     public static HttpDataSource.Factory getDefaultHttpDataSourceFactory(ReactContext context, DefaultBandwidthMeter bandwidthMeter, Map<String, String> requestHeaders) {
         if (defaultHttpDataSourceFactory == null || (requestHeaders != null && !requestHeaders.isEmpty())) {
-            defaultHttpDataSourceFactory = buildHttpDataSourceFactory(context, bandwidthMeter, requestHeaders);
+            defaultHttpDataSourceFactory = buildHttpDataSourceFactory(context, requestHeaders);
         }
         return defaultHttpDataSourceFactory;
     }
@@ -76,19 +77,23 @@ public class DataSourceUtil {
 
     private static DataSource.Factory buildDataSourceFactory(ReactContext context, DefaultBandwidthMeter bandwidthMeter, Map<String, String> requestHeaders) {
         return new DefaultDataSourceFactory(context, bandwidthMeter,
-                buildHttpDataSourceFactory(context, bandwidthMeter, requestHeaders));
+                buildHttpDataSourceFactory(context, requestHeaders));
     }
 
-    private static HttpDataSource.Factory buildHttpDataSourceFactory(ReactContext context, DefaultBandwidthMeter bandwidthMeter, Map<String, String> requestHeaders) {
-        OkHttpClient client = OkHttpClientProvider.getOkHttpClient();
+//    private static HttpDataSource.Factory buildHttpDataSourceFactory(ReactContext context, DefaultBandwidthMeter bandwidthMeter, Map<String, String> requestHeaders) {
+private static HttpDataSource.Factory buildHttpDataSourceFactory(ReactContext context, Map<String, String> requestHeaders) {
+    DefaultHttpDataSourceFactory factory = new DefaultHttpDataSourceFactory(getUserAgent(context));
+
+    OkHttpClient client = OkHttpClientProvider.getOkHttpClient();
         CookieJarContainer container = (CookieJarContainer) client.cookieJar();
         ForwardingCookieHandler handler = new ForwardingCookieHandler(context);
         container.setCookieJar(new JavaNetCookieJar(handler));
-        OkHttpDataSourceFactory okHttpDataSourceFactory = new OkHttpDataSourceFactory(client, getUserAgent(context), bandwidthMeter);
+//        OkHttpDataSourceFactory okHttpDataSourceFactory = new OkHttpDataSourceFactory(client, getUserAgent(context), bandwidthMeter);
 
         if (requestHeaders != null)
-            okHttpDataSourceFactory.getDefaultRequestProperties().set(requestHeaders);
+            factory.getDefaultRequestProperties().set(requestHeaders);
+//            okHttpDataSourceFactory.getDefaultRequestProperties().set(requestHeaders);
 
-        return okHttpDataSourceFactory;
+        return factory;
     }
 }
